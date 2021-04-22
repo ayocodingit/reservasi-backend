@@ -29,6 +29,9 @@ class ReservationRecurringRequest extends FormRequest
         $date = Carbon::now()->subDay()->format('Y-m-d');
         $maxDate = Carbon::now()->addYear()->format('Y-m-d');
 
+        $weekly = ReservationRecurringTypeEnum::WEEKLY();
+        $monthly = ReservationRecurringTypeEnum::MONTHLY();
+
         return [
             'title' => 'required',
             'asset_id' => 'required|exists:assets,id,deleted_at,NULL',
@@ -44,6 +47,8 @@ class ReservationRecurringRequest extends FormRequest
             ],
             'days' => 'array|required_if:repeat,true|max:7',
             'days.*'  => 'numeric|distinct|max:6',
+            'week' => "numeric|required_if:repeat_type,{$weekly},{$monthly}",
+            'month' => "numeric|required_if:repeat_type,{$monthly}"
         ];
     }
 }

@@ -36,6 +36,7 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::apiResource('asset', 'AssetController');
         Route::apiResource('reservation', 'ReservationController');
         Route::post('reservation/daily', 'ReservationDailyRecurringController')->name('reservation.daily');
+        Route::post('reservation/weekly', 'ReservationWeeklyRecurringController')->name('reservation.weekly');
         Route::put('command-center-reservation/{command_center_reservation}/approval', 'CommandCenterReservationApprovalController');
         Route::apiResource('command-center-reservation', 'CommandCenterReservationController');
         Route::apiResource('command-center-shift', 'CommandCenterShiftController')
