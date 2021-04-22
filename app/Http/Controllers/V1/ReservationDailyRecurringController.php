@@ -95,35 +95,4 @@ class ReservationDailyRecurringController extends Controller
 
         return $count;
     }
-
-    /**
-     * Method to create time details
-     *
-     * @return Array
-     */
-    protected function createTimeDetails($date, $from, $to)
-    {
-        $date = $date->format('Y-m-d');
-
-        return [
-            'date' => $date,
-            'start_time' => Carbon::parse($date . $from),
-            'end_time' => Carbon::parse($date . $to)
-        ];
-    }
-
-    /**
-     * Function to check asset availability
-     *
-     * @param  [String] $asset_id
-     * @param  [Array] $timeDetails
-     * @return Boolean
-     */
-    protected function isAvailableAsset($asset_id, $timeDetails)
-    {
-        return Reservation::where('asset_id', $asset_id)
-            ->validateTime((object) $timeDetails)
-            ->alreadyApproved()
-            ->doesntExist();
-    }
 }
