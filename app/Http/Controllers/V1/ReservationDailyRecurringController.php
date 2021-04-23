@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V1;
 
 use App\Enums\ReservationStatusEnum;
+use App\Events\AfterReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReservationRecurringRequest;
 use App\Models\Asset;
@@ -45,7 +46,7 @@ class ReservationDailyRecurringController extends Controller
                     return response(['errors' => __('validation.asset_reserved', ['attribute' => 'asset_id'])], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $reservationCreated += $this->createDailyReservations($request, $timeDetails);
+                $reservationCreated += $this->createReservation($request, $timeDetails);
 
                 $date->addDays(1);
             }
@@ -71,14 +72,14 @@ class ReservationDailyRecurringController extends Controller
      * @param  Int $count
      * @return Int
      */
-    protected function createDailyReservations($request, $timeDetails, $count = 0)
+    protected function createReservation($request, $timeDetails, $count = 0)
     {
         $asset = Asset::findOrFail($request->asset_id);
 
         $date = Carbon::parse($timeDetails['date']);
 
         if (in_array($date->dayOfWeek, $request->days)) {
-            $reservation = $request->validated() + $timeDetails + [
+            $reservation = Reservation::create($request->validated() + $timeDetails + [
                 'user_id_reservation' => $request->user()->uuid,
                 'user_fullname' => $request->user()->name,
                 'username' => $request->user()->username,
@@ -86,9 +87,9 @@ class ReservationDailyRecurringController extends Controller
                 'asset_name' => $asset->name,
                 'asset_description' => $asset->description,
                 'approval_status' => ReservationStatusEnum::already_approved()
-            ];
+            ]);
 
-            Reservation::create($reservation);
+            event(new AfterReservation($reservation, $asset));
 
             $count += 1;
         }
