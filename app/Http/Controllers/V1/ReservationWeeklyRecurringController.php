@@ -33,10 +33,9 @@ class ReservationWeeklyRecurringController extends Controller
      */
     public function __invoke(ReservationRecurringRequest $request)
     {
-        $startDate = Carbon::parse($request->start_date);
         $endDate = Carbon::parse($request->end_date);
 
-        $initDates = $this->createInitialDates($startDate, $request->days);
+        $initDates = $this->createInitialDates($request);
         $reservationCreated = 0;
 
         try {
@@ -44,17 +43,13 @@ class ReservationWeeklyRecurringController extends Controller
 
             foreach ($initDates as $date) {
                 while ($date->lte($endDate)) {
-                    if ($date->gte($startDate)) {
-                        $timeDetails = $this->createTimeDetails($date, $request->from, $request->to);
+                    $timeDetails = $this->createTimeDetails($date, $request->from, $request->to);
 
-                        if (!$this->isAvailableAsset($request->asset_id, $timeDetails)) {
-                            return response(['errors' => __('validation.asset_reserved', ['attribute' => 'asset_id'])], Response::HTTP_UNPROCESSABLE_ENTITY);
-                        }
-
-                        $this->createReservations($request, $timeDetails);
-
-                        $reservationCreated += 1;
+                    if (!$this->isAvailableAsset($request->asset_id, $timeDetails)) {
+                        return response(['errors' => __('validation.asset_reserved', ['attribute' => 'asset_id'])], Response::HTTP_UNPROCESSABLE_ENTITY);
                     }
+
+                    $reservationCreated += $this->createReservation($request, $timeDetails);
 
                     $date->addWeeks($request->week);
                 }
@@ -81,21 +76,22 @@ class ReservationWeeklyRecurringController extends Controller
      * @param  Int $count
      * @return Int
      */
-    protected function createReservations($request, $timeDetails)
+    protected function createReservation($request, $timeDetails, $count = 0)
     {
         $asset = Asset::findOrFail($request->asset_id);
 
-        $reservation = Reservation::create($request->validated() + $timeDetails + [
-            'user_id_reservation' => $request->user()->uuid,
-            'user_fullname' => $request->user()->name,
-            'username' => $request->user()->username,
-            'email' => $request->user()->email,
-            'asset_name' => $asset->name,
-            'asset_description' => $asset->description,
-            'approval_status' => ReservationStatusEnum::already_approved()
-        ]);
+        $startDate = Carbon::parse($request->start_date);
+        $date = Carbon::parse($timeDetails['date']);
 
-        event(new AfterReservation($reservation, $asset));
+        if ($date->gte($startDate)) {
+            $reservation = $this->storeReservation($request, $asset, $timeDetails);
+
+            event(new AfterReservation($reservation, $asset));
+
+            $count += 1;
+        }
+
+        return $count;
     }
 
     /**
@@ -105,9 +101,10 @@ class ReservationWeeklyRecurringController extends Controller
      * @param  Array $days
      * @return Array
      */
-    protected function createInitialDates($startDate, $days)
+    protected function createInitialDates($request)
     {
-        $date = $startDate->copy();
+        $date = Carbon::parse($request->start_date)->copy();
+        $days = $request->days;
 
         // Monday as the first day in a week
         $date->subDays($date->dayOfWeek - 1);

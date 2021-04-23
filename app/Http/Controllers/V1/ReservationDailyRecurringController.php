@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Enums\ReservationStatusEnum;
 use App\Events\AfterReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReservationRecurringRequest;
@@ -79,15 +78,7 @@ class ReservationDailyRecurringController extends Controller
         $date = Carbon::parse($timeDetails['date']);
 
         if (in_array($date->dayOfWeek, $request->days)) {
-            $reservation = Reservation::create($request->validated() + $timeDetails + [
-                'user_id_reservation' => $request->user()->uuid,
-                'user_fullname' => $request->user()->name,
-                'username' => $request->user()->username,
-                'email' => $request->user()->email,
-                'asset_name' => $asset->name,
-                'asset_description' => $asset->description,
-                'approval_status' => ReservationStatusEnum::already_approved()
-            ]);
+            $reservation = $this->storeReservation($request, $asset, $timeDetails);
 
             event(new AfterReservation($reservation, $asset));
 

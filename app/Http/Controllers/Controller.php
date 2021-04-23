@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReservationStatusEnum;
 use App\Models\Reservation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -14,6 +15,27 @@ class Controller extends BaseController
     use AuthorizesRequests;
     use DispatchesJobs;
     use ValidatesRequests;
+
+    /**
+     * Method to store reservation into db
+     *
+     * @param  Request $request
+     * @param  Asset $asset
+     * @param  Array $timeDetails
+     * @return Reservation
+     */
+    protected function storeReservation($request, $asset, $timeDetails)
+    {
+        return Reservation::create($request->validated() + $timeDetails + [
+            'user_id_reservation' => $request->user()->uuid,
+            'user_fullname' => $request->user()->name,
+            'username' => $request->user()->username,
+            'email' => $request->user()->email,
+            'asset_name' => $asset->name,
+            'asset_description' => $asset->description,
+            'approval_status' => ReservationStatusEnum::already_approved()
+        ]);
+    }
 
     /**
      * Method to create time details
