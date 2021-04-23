@@ -9,7 +9,7 @@ before_script:
     - ./cc-test-reporter before-build
 
 install:
-    - cp .env-example .env
+    - cp .env.example .env
     - travis_retry composer install --no-interaction --prefer-dist --no-suggest
     - php artisan key:generate --ansi
 
