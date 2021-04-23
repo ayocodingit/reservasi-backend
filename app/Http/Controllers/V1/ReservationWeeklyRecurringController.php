@@ -110,7 +110,7 @@ class ReservationWeeklyRecurringController extends Controller
         $date = $startDate->copy();
 
         // Monday as the first day in a week
-        $date->subDays($date->dayOfWeek-1);
+        $date->subDays($date->dayOfWeek - 1);
 
         $initDates = [];
 
