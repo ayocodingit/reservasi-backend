@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
-class ReservationDailyRecurringTest extends TestCase
+class ReservationWeeklyRecurringTest extends TestCase
 {
     use RefreshDatabase;
     use WithoutMiddleware;
@@ -43,12 +43,13 @@ class ReservationDailyRecurringTest extends TestCase
             'from' => Carbon::now()->format('H:i:s'),
             'to' => Carbon::now()->addMinutes(30)->format('H:i:s'),
             'repeat' => true,
-            'repeat_type' => 'DAILY',
-            'days' => [1, 2]
+            'repeat_type' => 'WEEKLY',
+            'days' => [1, 2],
+            'week' => 2
         ];
 
         // 2. Hit Api Endpoint
-        $response = $this->actingAs($employee)->post(route('reservation.daily'), $data);
+        $response = $this->actingAs($employee)->post(route('reservation.weekly'), $data);
 
         // 3. Verify and Assertion
         $response->assertStatus(Response::HTTP_CREATED);
